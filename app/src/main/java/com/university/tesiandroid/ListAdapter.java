@@ -14,12 +14,12 @@ import java.util.ArrayList;
  * Created by Davide on 31/03/2016.
  */
 public class ListAdapter extends BaseAdapter {
-    private ArrayList<BookInfo> list;
+    private ArrayList<PointInfo> list;
     private Context context;
 
     private LayoutInflater mInflater;
 
-    public ListAdapter(ArrayList<BookInfo> list, Context context) {
+    public ListAdapter(ArrayList<PointInfo> list, Context context) {
         this.list = list;
         this.context = context;
 
@@ -41,7 +41,7 @@ public class ListAdapter extends BaseAdapter {
         return 0;
     }
 
-    public void updateList(ArrayList<BookInfo> newlist) {
+    public void updateList(ArrayList<PointInfo> newlist) {
         list.clear();
         list.addAll(newlist);
         this.notifyDataSetChanged();
@@ -52,9 +52,9 @@ public class ListAdapter extends BaseAdapter {
         ViewHolder holder;
         if (convertView == null) {
             Log.d("Test", "convertView null");
-            convertView = mInflater.inflate(R.layout.home_list_item, null);
+            convertView = mInflater.inflate(R.layout.list_item, null);
             holder = new ViewHolder();
-            holder.txtTitolo = (TextView) convertView.findViewById(R.id.titolo);
+            holder.txtName = (TextView) convertView.findViewById(R.id.name);
 
             convertView.setTag(holder);
         } else {
@@ -62,13 +62,13 @@ public class ListAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
-        holder.txtTitolo.setText(list.get(position).getTitolo());
+        holder.txtName.setText(list.get(position).getName());
 
         return convertView;
     }
 
     static class ViewHolder {
 
-        TextView txtTitolo;
+        TextView txtName;
     }
 }

@@ -14,9 +14,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.StringRequest;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ListActivity extends Activity {
@@ -25,6 +29,11 @@ public class ListActivity extends Activity {
 
     private ListAdapter adapter;
 
+    private ArrayList<PointInfo> points = new ArrayList<>();
+
+    // Receives list requests from server
+    private JsonObject jsonResponse;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +41,7 @@ public class ListActivity extends Activity {
 
         listView = (ListView) findViewById(R.id.list_home);
 
-        adapter = new ListAdapter(books, getApplicationContext());
+        adapter = new ListAdapter(points, getApplicationContext());
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -46,11 +55,11 @@ public class ListActivity extends Activity {
                 int itemPosition = position;
 
                 // ListView Clicked item value
-                BookInfo data = (BookInfo) listView.getItemAtPosition(position);
+                PointInfo data = (PointInfo) listView.getItemAtPosition(position);
 
                 // Show Alert
                 Toast.makeText(getApplicationContext(),
-                        "Position :" + itemPosition + "  NomeLibro : " + data.getTitolo(), Toast.LENGTH_LONG)
+                        "Position :" + itemPosition + "  Name : " + data.getName(), Toast.LENGTH_LONG)
                         .show();
             }
 
@@ -81,10 +90,10 @@ public class ListActivity extends Activity {
                         jsonResponse = gson.fromJson(response, JsonObject.class);
                         JsonArray jsonArray = jsonResponse.get("list").getAsJsonArray();
 
-                        ArrayList<BookInfo> list = new ArrayList<>();
+                        ArrayList<PointInfo> list = new ArrayList<>();
 
                         adapter.updateList(list);
-                        Log.d("Test", "response terminata");
+                        Log.d("Test", "response ended");
                     }
                 }, new Response.ErrorListener() {
 
@@ -97,7 +106,7 @@ public class ListActivity extends Activity {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<String, String>();
-                params.put("opzione", "bookList");
+                params.put("option", "bookList");
 
                 return params;
             }
