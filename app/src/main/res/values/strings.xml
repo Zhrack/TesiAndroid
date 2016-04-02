@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">TesiAndroid</string>
+    <string name="title_activity_maps">Map</string>
+
+    <!--List Activity-->
+    <string name="txt_toggleStart">Start GPS Update</string>
+    <string name="txt_toggleStop">Stop GPS Update</string>
 </resources>

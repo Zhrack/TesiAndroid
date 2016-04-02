@@ -1,0 +1,56 @@
+{
+  "project_info": {
+    "project_id": "sunlit-core-126814",
+    "project_number": "930229872992",
+    "name": "Tesi Android"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:930229872992:android:fa52452db7a69612",
+        "client_id": "android:com.university.tesiandroid",
+        "client_type": 1,
+        "android_client_info": {
+          "package_name": "com.university.tesiandroid",
+          "certificate_hash": []
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "930229872992-gb2tuuo32t2q27ink7e582n6u842cb4l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.university.tesiandroid",
+            "certificate_hash": "BCDF1C355B4289DA9E54CA321717F1F0B25A2260"
+          }
+        },
+        {
+          "client_id": "930229872992-rvtmoevimnqpcaqhl40b2f3jsveis96s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "cloud_messaging_service": {
+          "status": 1,
+          "apns_config": []
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "google_signin_service": {
+          "status": 2
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "client_info": [],
+  "ARTIFACT_VERSION": "1"
+}
