@@ -24,6 +24,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationListener;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import org.w3c.dom.Text;
@@ -74,7 +75,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private JsonObject jsonResponse;
 
     // Search radius to be sent to server
-    private float searchRadius = 10000; // in meters
+    private float searchRadius = 100000; // in meters
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -158,7 +159,22 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
             startLocationUpdates();
         }
         // get points from server
-//        askPoints();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        // Assign the new location
+        mLastLocation = location;
+
+        Toast.makeText(getApplicationContext(), "Location changed!",
+                Toast.LENGTH_SHORT).show();
+
+        getLocation();
+
+        txtLatitude.setText("Lat: " + String.valueOf(latitude));
+        txtLongitude.setText("Long: " + String.valueOf(longitude));
+
+        askPoints();
     }
 
     public void askPoints()
@@ -176,6 +192,29 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                         JsonArray jsonArray = jsonResponse.get("list").getAsJsonArray();
 
                         ArrayList<PointInfo> list = new ArrayList<>();
+
+                        JsonObject jsonObject = new JsonObject();
+                        for (int i = 0; i < jsonArray.size(); ++i)
+                        {
+                            jsonObject = jsonArray.get(i).getAsJsonObject();
+
+                            PointInfo data = new PointInfo();
+                            data.setName(jsonObject.get("name").getAsString());
+                            data.setLatitude(jsonObject.get("latitude").getAsDouble());
+                            data.setLongitude(jsonObject.get("longitude").getAsDouble());
+                            data.setDistance(jsonObject.get("distance").getAsFloat());
+                            JsonElement wikiText = jsonObject.get("wikiText");
+                            if(wikiText != null)
+                            {
+                                data.setWikiText(wikiText.getAsString());
+                            }
+                            else
+                            {
+                                data.setWikiText("NO");
+                            }
+
+                            list.add(data);
+                        }
 
                         adapter.updateList(list);
                         Log.d("Test", "response ended");
@@ -196,6 +235,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                 Log.d(TAG, "sending longitude " + String.valueOf(longitude));
                 params.put("latitude", String.valueOf(latitude));
                 params.put("longitude", String.valueOf(longitude));
+                params.put("radius", String.valueOf(searchRadius));
 
                 return params;
             }
@@ -336,21 +376,4 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = "
                 + connectionResult.getErrorCode());
     }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        // Assign the new location
-        mLastLocation = location;
-
-        Toast.makeText(getApplicationContext(), "Location changed!",
-                Toast.LENGTH_SHORT).show();
-
-        // Displaying the new location on UI
-        getLocation();
-
-        txtLatitude.setText("Lat: " + String.valueOf(latitude));
-        txtLongitude.setText("Long: " + String.valueOf(longitude));
-
-    }
-
 }
