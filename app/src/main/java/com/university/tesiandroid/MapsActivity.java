@@ -1,5 +1,6 @@
 package com.university.tesiandroid;
 
+import android.graphics.Point;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 
@@ -9,6 +10,8 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -39,8 +42,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+
+        List<PointInfo> list = AppController.getInstance(this).getPoints();
+
+        for(int i = 0; i < list.size(); ++i)
+        {
+            PointInfo point = list.get(i);
+            LatLng location = new LatLng(point.getLatitude(), point.getLongitude());
+            mMap.addMarker(
+                    new MarkerOptions().
+                            position(location).
+                            title(point.getName()).snippet("Distance: " + point.getDistance() + "\n" + point.getWikiText())
+            );
+        }
+
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 }

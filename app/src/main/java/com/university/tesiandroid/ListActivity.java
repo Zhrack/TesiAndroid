@@ -1,6 +1,7 @@
 package com.university.tesiandroid;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -65,17 +66,17 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private ListAdapter adapter;
 
     private Button toggleGPSbtn;
+    private Button mapBtn;
     private TextView txtLatitude;
     private TextView txtLongitude;
-
-
-    private ArrayList<PointInfo> points = new ArrayList<>();
 
     // Receives list requests from server
     private JsonObject jsonResponse;
 
     // Search radius to be sent to server
     private float searchRadius = 100000; // in meters
+
+    private Intent mapIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,10 +85,11 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
         listView = (ListView) findViewById(R.id.list_home);
         toggleGPSbtn = (Button) findViewById(R.id.toggleGPS_btn);
+        mapBtn = (Button) findViewById(R.id.maps_btn);
         txtLatitude = (TextView) findViewById(R.id.txt_latitude);
         txtLongitude = (TextView) findViewById(R.id.txt_longitude);
 
-        adapter = new ListAdapter(points, getApplicationContext());
+        adapter = new ListAdapter(AppController.getInstance(this).getPoints(), getApplicationContext());
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -118,7 +120,21 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
             }
         });
 
+        mapBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(mRequestingLocationUpdates)
+                {
+                    togglePeriodicLocationUpdates();
+                }
+
+                startActivity(mapIntent);
+            }
+        });
+
         AppController.setCtx(this);
+
+        mapIntent = new Intent(this, MapsActivity.class);
 
         // First we need to check availability of play services
         if (checkPlayServices()) {

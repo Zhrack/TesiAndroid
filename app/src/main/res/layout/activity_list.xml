@@ -32,6 +32,14 @@
             android:clickable="true"
             android:layout_marginTop="10dp" />
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/txt_Maps"
+            android:id="@+id/maps_btn"
+            android:clickable="true"
+            android:layout_marginTop="10dp" />
+
 
     </LinearLayout>
 
