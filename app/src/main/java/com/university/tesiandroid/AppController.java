@@ -33,11 +33,6 @@ public class AppController extends Application {
     private static AppController mInstance;
     private static Context ctx;
 
-
-
-
-    private ArrayList<PointInfo> points = new ArrayList<>();
-
     public AppController(Context ctx)
     {
         this.ctx = ctx;
@@ -93,13 +88,5 @@ public class AppController extends Application {
     public static void setCtx(Context ctx)
     {
         AppController.ctx = ctx;
-    }
-
-    public ArrayList<PointInfo> getPoints() {
-        return points;
-    }
-
-    public void setPoints(ArrayList<PointInfo> points) {
-        this.points = points;
     }
 }

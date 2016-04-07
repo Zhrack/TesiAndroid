@@ -2,12 +2,16 @@ package com.university.tesiandroid;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,9 +47,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     // GPS STUFF
     private final static int PLAY_SERVICES_RESOLUTION_REQUEST = 1000;
 
-    private Location mLastLocation;
-    private double latitude;
-    private double longitude;
 
     // Google client to interact with Google API
     private GoogleApiClient mGoogleApiClient;
@@ -69,6 +70,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private Button mapBtn;
     private TextView txtLatitude;
     private TextView txtLongitude;
+    private EditText inputRadius;
 
     // Receives list requests from server
     private JsonObject jsonResponse;
@@ -83,13 +85,16 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
         listView = (ListView) findViewById(R.id.list_home);
         toggleGPSbtn = (Button) findViewById(R.id.toggleGPS_btn);
         mapBtn = (Button) findViewById(R.id.maps_btn);
         txtLatitude = (TextView) findViewById(R.id.txt_latitude);
         txtLongitude = (TextView) findViewById(R.id.txt_longitude);
+        inputRadius = (EditText) findViewById(R.id.radius_input);
 
-        adapter = new ListAdapter(AppController.getInstance(this).getPoints(), getApplicationContext());
+        adapter = new ListAdapter(LocationData.Instance().getPoints(), getApplicationContext());
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
@@ -123,14 +128,15 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         mapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mRequestingLocationUpdates)
-                {
+                if (mRequestingLocationUpdates) {
                     togglePeriodicLocationUpdates();
                 }
 
                 startActivity(mapIntent);
             }
         });
+
+        inputRadius.setText("100000");
 
         AppController.setCtx(this);
 
@@ -156,7 +162,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         if (mGoogleApiClient.isConnected() && mRequestingLocationUpdates) {
             startLocationUpdates();
         }
-        //askPoints();
     }
 
     @Override
@@ -180,15 +185,16 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     @Override
     public void onLocationChanged(Location location) {
         // Assign the new location
-        mLastLocation = location;
+        LocationData locationData = LocationData.Instance();
+        locationData.setmLastLocation(location);
 
         Toast.makeText(getApplicationContext(), "Location changed!",
                 Toast.LENGTH_SHORT).show();
 
         getLocation();
 
-        txtLatitude.setText("Lat: " + String.valueOf(latitude));
-        txtLongitude.setText("Long: " + String.valueOf(longitude));
+        txtLatitude.setText("Lat: " + String.valueOf(locationData.getLatitude()));
+        txtLongitude.setText("Long: " + String.valueOf(locationData.getLongitude()));
 
         askPoints();
     }
@@ -218,7 +224,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                             data.setName(jsonObject.get("name").getAsString());
                             data.setLatitude(jsonObject.get("latitude").getAsDouble());
                             data.setLongitude(jsonObject.get("longitude").getAsDouble());
-                            data.setDistance(jsonObject.get("distance").getAsFloat());
+                            data.setDistance(jsonObject.get("distance").getAsInt());
                             JsonElement wikiText = jsonObject.get("wikiText");
                             if(wikiText != null)
                             {
@@ -246,12 +252,13 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<String, String>();
+                LocationData locationData = LocationData.Instance();
                 params.put("option", "getPointList");
-                Log.d(TAG, "sending latitude " + String.valueOf(latitude));
-                Log.d(TAG, "sending longitude " + String.valueOf(longitude));
-                params.put("latitude", String.valueOf(latitude));
-                params.put("longitude", String.valueOf(longitude));
-                params.put("radius", String.valueOf(searchRadius));
+                Log.d(TAG, "sending latitude " + String.valueOf(locationData.getLatitude()));
+                Log.d(TAG, "sending longitude " + String.valueOf(locationData.getLongitude()));
+                params.put("latitude", String.valueOf(locationData.getLatitude()));
+                params.put("longitude", String.valueOf(locationData.getLongitude()));
+                params.put("radius", String.valueOf(inputRadius.getText()));
 
                 return params;
             }
@@ -267,14 +274,11 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
      * */
     private void getLocation() {
 
-        mLastLocation = LocationServices.FusedLocationApi
-                .getLastLocation(mGoogleApiClient);
+        LocationData locationData = LocationData.Instance();
+        locationData.setmLastLocation(LocationServices.FusedLocationApi
+                .getLastLocation(mGoogleApiClient));
 
-        if (mLastLocation != null) {
-            latitude = mLastLocation.getLatitude();
-            longitude = mLastLocation.getLongitude();
-        }
-        else{
+        if (locationData.getmLastLocation() == null) {
             Log.d(TAG, "(Couldn't get the location. Make sure location is enabled on the device)");
         }
     }
@@ -319,11 +323,12 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
      * */
     protected void startLocationUpdates() {
 
+        LocationData locationData = LocationData.Instance();
         LocationServices.FusedLocationApi.requestLocationUpdates(
                 mGoogleApiClient, mLocationRequest, this);
 
-        Log.d(TAG, "latitude " + String.valueOf(latitude));
-        Log.d(TAG, "longitude " + String.valueOf(longitude));
+        Log.d(TAG, "latitude " + String.valueOf(locationData.getLatitude()));
+        Log.d(TAG, "longitude " + String.valueOf(locationData.getLongitude()));
 
     }
 

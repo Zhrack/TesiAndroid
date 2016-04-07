@@ -67,7 +67,7 @@ public class ListAdapter extends BaseAdapter {
         }
 
         holder.txtName.setText("Name: " + list.get(position).getName());
-        holder.txtDistance.setText("Dist: " + String.valueOf(list.get(position).getDistance()));
+        holder.txtDistance.setText("Dist: " + String.valueOf(list.get(position).getDistance()) + " m");
         holder.txtLat.setText("Lat: " + String.valueOf(list.get(position).getLatitude()));
         holder.txtLong.setText("Long: " + String.valueOf(list.get(position).getLongitude()));
         holder.txtTags.setText("Tag: " + list.get(position).getWikiText());

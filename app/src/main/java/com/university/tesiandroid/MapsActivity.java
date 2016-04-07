@@ -8,7 +8,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
@@ -16,6 +19,8 @@ import java.util.List;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
+
+    private LatLngBounds.Builder builder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,6 +30,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        builder = new LatLngBounds.Builder();
     }
 
 
@@ -40,10 +47,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        mMap.setOnMapLoadedCallback(new GoogleMap.OnMapLoadedCallback() {
+            @Override
+            public void onMapLoaded() {
+                // Set the camera to the greatest possible zoom level that includes the
+                // bounds
+                mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), 50), 2000, null);
+            }
+        });
 
-        // Add a marker in Sydney and move the camera
-
-        List<PointInfo> list = AppController.getInstance(this).getPoints();
+        LocationData locationData = LocationData.Instance();
+        List<PointInfo> list = locationData.getPoints();
 
         for(int i = 0; i < list.size(); ++i)
         {
@@ -54,8 +68,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             position(location).
                             title(point.getName()).snippet("Distance: " + point.getDistance() + "\n" + point.getWikiText())
             );
+//            bounds = bounds.including(location);
+            builder.include(location);
         }
 
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng devicePosition = new LatLng(locationData.getLatitude(), locationData.getLongitude());
+        mMap.addMarker(
+                new MarkerOptions().
+                        position(devicePosition).
+                        title("Your position")
+                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE))
+        );
+        builder.include(devicePosition);
+
     }
 }

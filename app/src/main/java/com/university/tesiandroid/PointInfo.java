@@ -37,11 +37,11 @@ public class PointInfo {
         this.wikiText = wikiText;
     }
 
-    public float getDistance() {
+    public int getDistance() {
         return distance;
     }
 
-    public void setDistance(float distance) {
+    public void setDistance(int distance) {
         this.distance = distance;
     }
 
@@ -49,5 +49,5 @@ public class PointInfo {
     private double latitude;
     private double longitude;
     private String wikiText;
-    private float distance;
+    private int distance;
 }
