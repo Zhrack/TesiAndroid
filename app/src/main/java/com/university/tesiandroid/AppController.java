@@ -21,7 +21,8 @@ public class AppController extends Application {
 
     public final static String MESSAGE_CHOSEN_BOOK = "MESSAGE_CHOSEN_BOOK";
 
-    private static final String basicURL = "http://192.168.1.56:8084/tesi/";
+//    private static final String basicURL = "http://192.168.1.56:8084/tesi/";
+    private static final String basicURL = "http://tesi-env.us-west-2.elasticbeanstalk.com/";
 
     public static final String urlServer = basicURL + "Controller";
 

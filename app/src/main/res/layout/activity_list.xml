@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="#d3c033">
+    android:layout_height="fill_parent">
 
     <LinearLayout
         android:orientation="horizontal"
@@ -12,17 +11,6 @@
         android:weightSum="1"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp">
-
-        <TextView
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:gravity="center_vertical|center_horizontal"
-            android:textSize="20dp"
-            android:layout_width="wrap_content"
-            android:textColor="#3949ab"
-            android:layout_weight="0.95"
-            android:layout_marginTop="10dp"
-            android:textStyle="bold" />
 
         <Button
             android:layout_width="wrap_content"

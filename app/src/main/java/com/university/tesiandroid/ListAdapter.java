@@ -56,8 +56,8 @@ public class ListAdapter extends BaseAdapter {
             holder = new ViewHolder();
             holder.txtName = (TextView) convertView.findViewById(R.id.textName);
             holder.txtDistance = (TextView) convertView.findViewById(R.id.textDistance);
-            holder.txtLat = (TextView) convertView.findViewById(R.id.textLat);
-            holder.txtLong = (TextView) convertView.findViewById(R.id.textLong);
+//            holder.txtLat = (TextView) convertView.findViewById(R.id.textLat);
+//            holder.txtLong = (TextView) convertView.findViewById(R.id.textLong);
             holder.txtTags = (TextView) convertView.findViewById(R.id.textTags);
 
             convertView.setTag(holder);
@@ -68,8 +68,8 @@ public class ListAdapter extends BaseAdapter {
 
         holder.txtName.setText("Name: " + list.get(position).getName());
         holder.txtDistance.setText("Dist: " + String.valueOf(list.get(position).getDistance()) + " m");
-        holder.txtLat.setText("Lat: " + String.valueOf(list.get(position).getLatitude()));
-        holder.txtLong.setText("Long: " + String.valueOf(list.get(position).getLongitude()));
+//        holder.txtLat.setText("Lat: " + String.valueOf(list.get(position).getLatitude()));
+//        holder.txtLong.setText("Long: " + String.valueOf(list.get(position).getLongitude()));
         holder.txtTags.setText("Tag: " + list.get(position).getWikiText());
 
         return convertView;
@@ -79,8 +79,8 @@ public class ListAdapter extends BaseAdapter {
 
         TextView txtName;
         TextView txtDistance;
-        TextView txtLat;
-        TextView txtLong;
+//        TextView txtLat;
+//        TextView txtLong;
         TextView txtTags;
     }
 }
