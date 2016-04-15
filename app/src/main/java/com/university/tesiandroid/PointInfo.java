@@ -5,6 +5,10 @@ package com.university.tesiandroid;
  */
 public class PointInfo {
 
+    public static final int WIKI_NOT_PRESENT = -1;
+    public static final int WIKI_TO_PROCESS = 0;
+    public static final int WIKI_READY = 1;
+
     public String getName() {
         return name;
     }
@@ -37,6 +41,23 @@ public class PointInfo {
         this.wikiText = wikiText;
     }
 
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+
+    public int getWikiLoaded() {
+        return wikiLoaded;
+    }
+
+    public void setWikiLoaded(int wikiLoaded) {
+        this.wikiLoaded = wikiLoaded;
+    }
+
     public int getDistance() {
         return distance;
     }
@@ -49,5 +70,7 @@ public class PointInfo {
     private double latitude;
     private double longitude;
     private String wikiText;
+    private String language;
+    private int wikiLoaded;
     private int distance;
 }

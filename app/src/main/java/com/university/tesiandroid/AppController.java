@@ -3,14 +3,11 @@ package com.university.tesiandroid;
 import android.app.Application;
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
-
-import java.util.ArrayList;
 
 /**
  * Created by Davide on 31/03/2016.
@@ -25,6 +22,8 @@ public class AppController extends Application {
     private static final String basicURL = "http://tesi-env.us-west-2.elasticbeanstalk.com/";
 
     public static final String urlServer = basicURL + "Controller";
+    public static final String http = "http://";
+    public static final String urlWiki = ".wikipedia.org/wiki/";
 
     public static final String TAG = AppController.class
             .getSimpleName();

@@ -5,10 +5,10 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.speech.tts.TextToSpeech;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -24,19 +24,26 @@ import com.android.volley.toolbox.StringRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationListener;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import org.w3c.dom.Text;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class ListActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener{
@@ -66,7 +73,12 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private ListView listView;
     private ListAdapter adapter;
 
-    private Button toggleGPSbtn;
+    private int itemPosition;
+    private String firstParagraphText;
+    private Handler handler;
+    private boolean wikiParserThreadAvailable;
+    private ThreadPoolExecutor executor;
+
     private Button mapBtn;
     private TextView txtLatitude;
     private TextView txtLongitude;
@@ -75,10 +87,9 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     // Receives list requests from server
     private JsonObject jsonResponse;
 
-    // Search radius to be sent to server
-    private float searchRadius = 100000; // in meters
-
     private Intent mapIntent;
+
+    private TextToSpeech textToSpeech;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +99,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         listView = (ListView) findViewById(R.id.list_home);
-        toggleGPSbtn = (Button) findViewById(R.id.toggleGPS_btn);
         mapBtn = (Button) findViewById(R.id.maps_btn);
         txtLatitude = (TextView) findViewById(R.id.txt_latitude);
         txtLongitude = (TextView) findViewById(R.id.txt_longitude);
@@ -98,45 +108,96 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         // Assign adapter to ListView
         listView.setAdapter(adapter);
 
+        handler = new Handler();
+        wikiParserThreadAvailable = true;
+
         // ListView Item Click Listener
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                // ListView Clicked item index
-                int itemPosition = position;
-
                 // ListView Clicked item value
-                PointInfo data = (PointInfo) listView.getItemAtPosition(position);
+                final PointInfo data = (PointInfo) listView.getItemAtPosition(position);
 
-                // Show Alert
-                Toast.makeText(getApplicationContext(),
-                        "Position :" + itemPosition + "  Name : " + data.getName(), Toast.LENGTH_LONG)
-                        .show();
+                switch (data.getWikiLoaded())
+                {
+                    case PointInfo.WIKI_NOT_PRESENT:
+
+                        break;
+                    case PointInfo.WIKI_TO_PROCESS:
+                        // start thread to connect to wikipedia
+                        itemPosition = position;
+                        wikiParserThreadAvailable = false;
+                        executor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    Document doc = Jsoup.connect(AppController.http + data.getLanguage() + AppController.urlWiki + data.getWikiText()).get();
+
+                                    Elements paragraphs = doc.select("#mw-content-text div > p");
+
+                                    Element firstParagraph = paragraphs.first();
+                                    firstParagraphText = firstParagraph.text();
+                                    // sometimes the coordinates are taken as first paragraph, check for that
+                                    if(firstParagraphText.startsWith("Coord"))
+                                    {
+                                        firstParagraph = paragraphs.get(1);
+                                        firstParagraphText = firstParagraph.text();
+                                    }
+
+                                    Log.d(TAG, firstParagraphText);
+
+
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            adapter.updateWikiText(itemPosition, firstParagraphText);
+
+                                            PointInfo tempData = (PointInfo) listView.getItemAtPosition(itemPosition);
+                                            tempData.setWikiLoaded(PointInfo.WIKI_READY);
+                                            speak(tempData);
+                                            wikiParserThreadAvailable = true;
+                                        }
+                                    });
+
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                    handler.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            adapter.updateWikiText(itemPosition, "NO");
+                                            data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
+                                            wikiParserThreadAvailable = true;
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                        break;
+                    case PointInfo.WIKI_READY:
+                        speak(data);
+                        break;
+                    default:
+                        Log.d(TAG, "wiki loaded status doesn't exist: " + String.valueOf(data.getWikiLoaded()));
+                        break;
+                }
             }
 
-        });
-
-        toggleGPSbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                togglePeriodicLocationUpdates();
-            }
         });
 
         mapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mRequestingLocationUpdates) {
-                    togglePeriodicLocationUpdates();
+                    stopLocationUpdates();
                 }
 
                 startActivity(mapIntent);
             }
         });
 
-        inputRadius.setText("100000");
+        inputRadius.setText("80000");
 
         AppController.setCtx(this);
 
@@ -149,6 +210,21 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
             createLocationRequest();
         }
+
+        mRequestingLocationUpdates = true;
+
+        int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_CORES);
+
+        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+                if(status != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(Locale.UK);
+                }
+            }
+        });
+
     }
 
     @Override
@@ -168,7 +244,11 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     public void onPause() {
         super.onPause();  // Always call the superclass method first
 
-        stopLocationUpdates();
+        if(mRequestingLocationUpdates)
+        {
+            stopLocationUpdates();
+            mRequestingLocationUpdates = true;
+        }
     }
 
     @Override
@@ -179,28 +259,43 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         if (mRequestingLocationUpdates) {
             startLocationUpdates();
         }
-        // get points from server
     }
 
     @Override
     public void onLocationChanged(Location location) {
-        // Assign the new location
-        LocationData locationData = LocationData.Instance();
-        locationData.setmLastLocation(location);
+        if(wikiParserThreadAvailable)
+        {
+            // Assign the new location
+            LocationData locationData = LocationData.Instance();
+            locationData.setmLastLocation(location);
 
-        Toast.makeText(getApplicationContext(), "Location changed!",
-                Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Location changed!",
+                    Toast.LENGTH_SHORT).show();
 
-        getLocation();
+            getLocation();
 
-        txtLatitude.setText("Lat: " + String.valueOf(locationData.getLatitude()));
-        txtLongitude.setText("Long: " + String.valueOf(locationData.getLongitude()));
+            txtLatitude.setText("Lat: " + String.valueOf(locationData.getLatitude()));
+            txtLongitude.setText("Long: " + String.valueOf(locationData.getLongitude()));
 
-        askPoints();
+            askPoints();
+        }
+    }
+
+    public void speak(PointInfo data)
+    {
+        if(data.getLanguage().equals("it"))
+            textToSpeech.setLanguage(Locale.ITALY);
+        else if(data.getLanguage().equals("en"))
+            textToSpeech.setLanguage(Locale.UK);
+        else
+            Log.d(TAG, "wiki language don't available: " + data.getLanguage());
+
+        textToSpeech.speak(data.getWikiText(), TextToSpeech.QUEUE_FLUSH, null);
     }
 
     public void askPoints()
     {
+        wikiParserThreadAvailable = false;
         StringRequest jsonObjReq = new StringRequest(Request.Method.POST,
                 AppController.urlServer,
                 new Response.Listener<String>() {
@@ -213,9 +308,8 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                         jsonResponse = gson.fromJson(response, JsonObject.class);
                         JsonArray jsonArray = jsonResponse.get("list").getAsJsonArray();
 
+                        JsonObject jsonObject;
                         ArrayList<PointInfo> list = new ArrayList<>();
-
-                        JsonObject jsonObject = new JsonObject();
                         for (int i = 0; i < jsonArray.size(); ++i)
                         {
                             jsonObject = jsonArray.get(i).getAsJsonObject();
@@ -225,21 +319,71 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                             data.setLatitude(jsonObject.get("latitude").getAsDouble());
                             data.setLongitude(jsonObject.get("longitude").getAsDouble());
                             data.setDistance(jsonObject.get("distance").getAsInt());
+
                             JsonElement wikiText = jsonObject.get("wikiText");
+
+                            boolean wikiPresent = false;
+                            String lang = null;
+                            String wikiTag = null;
                             if(wikiText != null)
                             {
-                                data.setWikiText(wikiText.getAsString());
+                                // extract wiki tag
+                                String tag = wikiText.getAsString();
+                                if(tag.contains("wikipedia"))
+                                {
+                                    String[] tokens = tag.split("\", \"");
+                                    for(String token : tokens)
+                                    {
+                                        if(token.contains("wikipedia"))
+                                        {
+                                            Log.d(TAG, "token: " + token);
+                                            String[] wikiString = token.split("\"=>\"");
+                                            // found an empty wiki link
+                                            if(wikiString.length < 1)
+                                                break;
+
+                                            String[] multipleWikiLinks = wikiString[1].split(";");
+                                            if(multipleWikiLinks.length != 1)
+                                            {
+                                                // multiple links found, get only first one
+                                                wikiString[1] = multipleWikiLinks[0];
+                                            }
+                                            String[] temp = wikiString[1].split(":");
+
+                                            lang = temp[0];
+                                            if(!lang.equals("it") && !lang.equals("en"))
+                                            {
+                                                // only italian and english accepted
+                                                break;
+                                            }
+                                            if(temp[1].endsWith("\""))
+                                                temp[1] = temp[1].substring(0, temp[1].length() - 1);
+                                            wikiTag = temp[1].replaceAll(" ", "_");
+                                            Log.d(TAG, lang);
+                                            Log.d(TAG, wikiTag);
+                                            data.setWikiText(wikiTag);
+                                            data.setLanguage(lang);
+                                            data.setWikiLoaded(PointInfo.WIKI_TO_PROCESS);
+                                            wikiPresent = true;
+                                            break;
+                                        }
+                                    } // inner loop
+
+                                }
                             }
-                            else
+
+                            if(!wikiPresent)
                             {
-                                data.setWikiText("NO");
+                                data.setWikiText("");
+                                data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
                             }
 
                             list.add(data);
                         }
 
                         adapter.updateList(list);
-                        Log.d("Test", "response ended");
+
+//                        wikiParser.execute(jsonArray);
                     }
                 }, new Response.ErrorListener() {
 
@@ -284,30 +428,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     }
 
     /**
-     * Method to toggle periodic location updates
-     * */
-    private void togglePeriodicLocationUpdates() {
-        if (!mRequestingLocationUpdates) {
-            mRequestingLocationUpdates = true;
-            toggleGPSbtn.setText(R.string.txt_toggleStop);
-
-            // Starting the location updates
-            startLocationUpdates();
-
-            Log.d(TAG, "Periodic location updates started!");
-
-        } else {
-            mRequestingLocationUpdates = false;
-            toggleGPSbtn.setText(R.string.txt_toggleStart);
-
-            // Stopping the location updates
-            stopLocationUpdates();
-
-            Log.d(TAG, "Periodic location updates stopped!");
-        }
-    }
-
-    /**
      * Creating location request object
      * */
     protected void createLocationRequest() {
@@ -330,6 +450,8 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         Log.d(TAG, "latitude " + String.valueOf(locationData.getLatitude()));
         Log.d(TAG, "longitude " + String.valueOf(locationData.getLongitude()));
 
+        mRequestingLocationUpdates = true;
+        Log.d(TAG, "Periodic location updates started!");
     }
 
     /**
@@ -338,6 +460,9 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     protected void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
+
+        mRequestingLocationUpdates = false;
+        Log.d(TAG, "Periodic location updates stopped!");
     }
 
     /**

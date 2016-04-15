@@ -14,6 +14,9 @@ import java.util.ArrayList;
  * Created by Davide on 31/03/2016.
  */
 public class ListAdapter extends BaseAdapter {
+    // LogCat tag
+    private static final String TAG = ListAdapter.class.getSimpleName();
+
     private ArrayList<PointInfo> list;
     private Context context;
 
@@ -47,29 +50,32 @@ public class ListAdapter extends BaseAdapter {
         this.notifyDataSetChanged();
     }
 
+    public void updateWikiText(int index, String text)
+    {
+        Log.d(TAG, text);
+        list.get(index).setWikiText(text);
+        this.notifyDataSetChanged();
+    }
+
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
         if (convertView == null) {
-            Log.d("Test", "convertView null");
+//            Log.d("Test", "convertView null");
             convertView = mInflater.inflate(R.layout.list_item, null);
             holder = new ViewHolder();
             holder.txtName = (TextView) convertView.findViewById(R.id.textName);
             holder.txtDistance = (TextView) convertView.findViewById(R.id.textDistance);
-//            holder.txtLat = (TextView) convertView.findViewById(R.id.textLat);
-//            holder.txtLong = (TextView) convertView.findViewById(R.id.textLong);
             holder.txtTags = (TextView) convertView.findViewById(R.id.textTags);
 
             convertView.setTag(holder);
         } else {
-            Log.d("Test", "convertView OK");
+//            Log.d("Test", "convertView OK");
             holder = (ViewHolder) convertView.getTag();
         }
 
         holder.txtName.setText("Name: " + list.get(position).getName());
         holder.txtDistance.setText("Dist: " + String.valueOf(list.get(position).getDistance()) + " m");
-//        holder.txtLat.setText("Lat: " + String.valueOf(list.get(position).getLatitude()));
-//        holder.txtLong.setText("Long: " + String.valueOf(list.get(position).getLongitude()));
         holder.txtTags.setText("Tag: " + list.get(position).getWikiText());
 
         return convertView;
@@ -79,8 +85,6 @@ public class ListAdapter extends BaseAdapter {
 
         TextView txtName;
         TextView txtDistance;
-//        TextView txtLat;
-//        TextView txtLong;
         TextView txtTags;
     }
 }

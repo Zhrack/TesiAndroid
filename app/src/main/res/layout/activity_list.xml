@@ -6,19 +6,12 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:weightSum="1"
         android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/txt_toggleStart"
-            android:id="@+id/toggleGPS_btn"
-            android:clickable="true"
-            android:layout_marginTop="10dp" />
+        android:layout_marginRight="10dp"
+        android:layout_gravity="right">
 
         <Button
             android:layout_width="wrap_content"
@@ -88,6 +81,7 @@
         android:layout_width="fill_parent"
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
-        android:dividerHeight="5dp" />
+        android:dividerHeight="5dp"
+        android:descendantFocusability="blocksDescendants"/>
 
 </LinearLayout>
