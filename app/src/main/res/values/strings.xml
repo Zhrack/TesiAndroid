@@ -7,4 +7,6 @@
     <string name="txt_toggleStop">Stop GPS Update</string>
     <string name="txt_Maps">Show on Map</string>
     <string name="txt_radius">Search radius:</string>
+
+    <string name="wiki_not_available">Information not available from Wikipedia</string>
 </resources>

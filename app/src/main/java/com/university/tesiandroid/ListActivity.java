@@ -6,10 +6,8 @@ import android.content.pm.ActivityInfo;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
-import android.speech.tts.TextToSpeech;
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -32,18 +30,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class ListActivity extends Activity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener, LocationListener{
@@ -73,11 +62,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private ListView listView;
     private ListAdapter adapter;
 
-    private int itemPosition;
-    private String firstParagraphText;
     private Handler handler;
-    private boolean wikiParserThreadAvailable;
-    private ThreadPoolExecutor executor;
 
     private Button mapBtn;
     private TextView txtLatitude;
@@ -88,8 +73,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private JsonObject jsonResponse;
 
     private Intent mapIntent;
-
-    private TextToSpeech textToSpeech;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,87 +87,11 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         txtLongitude = (TextView) findViewById(R.id.txt_longitude);
         inputRadius = (EditText) findViewById(R.id.radius_input);
 
-        adapter = new ListAdapter(LocationData.Instance().getPoints(), getApplicationContext());
+        handler = new Handler();
+
+        adapter = new ListAdapter(LocationData.Instance().getPoints(), getApplicationContext(), handler);
         // Assign adapter to ListView
         listView.setAdapter(adapter);
-
-        handler = new Handler();
-        wikiParserThreadAvailable = true;
-
-        // ListView Item Click Listener
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-                // ListView Clicked item value
-                final PointInfo data = (PointInfo) listView.getItemAtPosition(position);
-
-                switch (data.getWikiLoaded())
-                {
-                    case PointInfo.WIKI_NOT_PRESENT:
-
-                        break;
-                    case PointInfo.WIKI_TO_PROCESS:
-                        // start thread to connect to wikipedia
-                        itemPosition = position;
-                        wikiParserThreadAvailable = false;
-                        executor.execute(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    Document doc = Jsoup.connect(AppController.http + data.getLanguage() + AppController.urlWiki + data.getWikiText()).get();
-
-                                    Elements paragraphs = doc.select("#mw-content-text div > p");
-
-                                    Element firstParagraph = paragraphs.first();
-                                    firstParagraphText = firstParagraph.text();
-                                    // sometimes the coordinates are taken as first paragraph, check for that
-                                    if(firstParagraphText.startsWith("Coord"))
-                                    {
-                                        firstParagraph = paragraphs.get(1);
-                                        firstParagraphText = firstParagraph.text();
-                                    }
-
-                                    Log.d(TAG, firstParagraphText);
-
-
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            adapter.updateWikiText(itemPosition, firstParagraphText);
-
-                                            PointInfo tempData = (PointInfo) listView.getItemAtPosition(itemPosition);
-                                            tempData.setWikiLoaded(PointInfo.WIKI_READY);
-                                            speak(tempData);
-                                            wikiParserThreadAvailable = true;
-                                        }
-                                    });
-
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    handler.post(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            adapter.updateWikiText(itemPosition, "NO");
-                                            data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
-                                            wikiParserThreadAvailable = true;
-                                        }
-                                    });
-                                }
-                            }
-                        });
-                        break;
-                    case PointInfo.WIKI_READY:
-                        speak(data);
-                        break;
-                    default:
-                        Log.d(TAG, "wiki loaded status doesn't exist: " + String.valueOf(data.getWikiLoaded()));
-                        break;
-                }
-            }
-
-        });
 
         mapBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -212,19 +119,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         }
 
         mRequestingLocationUpdates = true;
-
-        int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_CORES);
-
-        textToSpeech=new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if(status != TextToSpeech.ERROR) {
-                    textToSpeech.setLanguage(Locale.UK);
-                }
-            }
-        });
-
     }
 
     @Override
@@ -263,7 +157,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onLocationChanged(Location location) {
-        if(wikiParserThreadAvailable)
+        if(adapter.isWikiParserThreadAvailable())
         {
             // Assign the new location
             LocationData locationData = LocationData.Instance();
@@ -281,21 +175,9 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
         }
     }
 
-    public void speak(PointInfo data)
-    {
-        if(data.getLanguage().equals("it"))
-            textToSpeech.setLanguage(Locale.ITALY);
-        else if(data.getLanguage().equals("en"))
-            textToSpeech.setLanguage(Locale.UK);
-        else
-            Log.d(TAG, "wiki language don't available: " + data.getLanguage());
-
-        textToSpeech.speak(data.getWikiText(), TextToSpeech.QUEUE_FLUSH, null);
-    }
-
     public void askPoints()
     {
-        wikiParserThreadAvailable = false;
+        adapter.setWikiParserThreadAvailable(false);
         StringRequest jsonObjReq = new StringRequest(Request.Method.POST,
                 AppController.urlServer,
                 new Response.Listener<String>() {
@@ -364,6 +246,8 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                                             data.setWikiText(wikiTag);
                                             data.setLanguage(lang);
                                             data.setWikiLoaded(PointInfo.WIKI_TO_PROCESS);
+                                            // used by adapter to know if recycled item button should be visible
+                                            data.setAudioButtonVisible(true);
                                             wikiPresent = true;
                                             break;
                                         }
@@ -376,6 +260,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                             {
                                 data.setWikiText("");
                                 data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
+                                data.setAudioButtonVisible(false);
                             }
 
                             list.add(data);
