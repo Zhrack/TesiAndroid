@@ -1,7 +1,6 @@
 package com.university.tesiandroid;
 
 import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;

@@ -54,8 +54,8 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
     // Location updates intervals in sec
     private static int UPDATE_INTERVAL = 10000; // 10 sec
-    private static int FATEST_INTERVAL = 5000; // 5 sec
-    private static int DISPLACEMENT = 5; // 1 meters
+    private static int FASTEST_INTERVAL = 5000; // 5 sec
+    private static int DISPLACEMENT = 1; // 1 meters
 
     // UI elements
 
@@ -65,8 +65,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private Handler handler;
 
     private Button mapBtn;
-    private TextView txtLatitude;
-    private TextView txtLongitude;
+    private TextView txtDevicePosition;
     private EditText inputRadius;
 
     // Receives list requests from server
@@ -83,8 +82,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
         listView = (ListView) findViewById(R.id.list_home);
         mapBtn = (Button) findViewById(R.id.maps_btn);
-        txtLatitude = (TextView) findViewById(R.id.txt_latitude);
-        txtLongitude = (TextView) findViewById(R.id.txt_longitude);
+        txtDevicePosition = (TextView) findViewById(R.id.txt_device_position);
         inputRadius = (EditText) findViewById(R.id.radius_input);
 
         handler = new Handler();
@@ -168,11 +166,12 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
             getLocation();
 
-            txtLatitude.setText("Lat: " + String.valueOf(locationData.getLatitude()));
-            txtLongitude.setText("Long: " + String.valueOf(locationData.getLongitude()));
+            txtDevicePosition.setText("Position: " + String.valueOf(locationData.getLatitude()) + ", " +
+            String.valueOf(locationData.getLongitude()));
 
             askPoints();
         }
+        Log.d(TAG, "location changed");
     }
 
     public void askPoints()
@@ -262,10 +261,8 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
                             list.add(data);
                         }
-
+                        adapter.setWikiParserThreadAvailable(true);
                         adapter.updateList(list);
-
-//                        wikiParser.execute(jsonArray);
                     }
                 }, new Response.ErrorListener() {
 
@@ -298,7 +295,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     /**
      * Method to display the location on UI
      * */
-    private void getLocation() {
+    public void getLocation() {
 
         LocationData locationData = LocationData.Instance();
         locationData.setmLastLocation(LocationServices.FusedLocationApi
@@ -315,7 +312,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     protected void createLocationRequest() {
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(UPDATE_INTERVAL);
-        mLocationRequest.setFastestInterval(FATEST_INTERVAL);
+        mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setSmallestDisplacement(DISPLACEMENT);
     }
