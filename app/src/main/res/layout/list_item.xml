@@ -3,11 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:baselineAligned="false">
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="fill_parent"
         android:layout_weight="1">
 
@@ -24,7 +25,7 @@
             android:paddingRight="8dp"
             android:layout_weight="1"
             android:layout_gravity="center_vertical"
-            android:layout_margin="4dp" />
+            android:layout_margin="2dp" />
 
         <TextView
             android:id="@+id/textDistance"
@@ -39,19 +40,34 @@
             android:layout_row="1"
             android:layout_weight="1"
             android:ellipsize="marquee"
-            android:layout_margin="4dp" />
+            android:layout_margin="2dp" />
 
     </LinearLayout>
 
-    <ImageButton
+    <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/audio_btn"
-        android:layout_row="1"
-        android:layout_column="0"
-        android:layout_weight="0.20"
-        android:src="@drawable/ic_action_name"
-        android:layout_margin="5dp"
-        android:layout_gravity="center_vertical" />
+        android:layout_gravity="center_vertical">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/audio_btn"
+            android:src="@drawable/ic_action_name"
+            android:layout_margin="5dp"
+            android:layout_gravity="center_vertical"
+            android:visibility="visible"/>
+
+        <ProgressBar
+            android:id="@+id/wiki_progress"
+            style="?android:attr/progressBarStyleSmall"
+            android:layout_width="40dip"
+            android:layout_height="40dip"
+            android:layout_margin="10dip"
+            android:visibility="gone"
+            android:layout_centerInParent="true">
+        </ProgressBar>
+
+    </RelativeLayout>
 
 </LinearLayout>

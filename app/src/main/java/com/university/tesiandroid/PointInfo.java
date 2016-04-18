@@ -73,16 +73,4 @@ public class PointInfo {
     private String language;
     private int wikiLoaded;
     private int distance;
-
-    public boolean isAudioButtonVisible() {
-        return audioButtonVisible;
-    }
-
-    public void setAudioButtonVisible(boolean audioButtonVisible) {
-        this.audioButtonVisible = audioButtonVisible;
-    }
-
-    // not exactly data, but it's used by the adapter
-    // should the audio button be visible?
-    private boolean audioButtonVisible;
 }

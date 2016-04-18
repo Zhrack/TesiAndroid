@@ -246,8 +246,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                                             data.setWikiText(wikiTag);
                                             data.setLanguage(lang);
                                             data.setWikiLoaded(PointInfo.WIKI_TO_PROCESS);
-                                            // used by adapter to know if recycled item button should be visible
-                                            data.setAudioButtonVisible(true);
                                             wikiPresent = true;
                                             break;
                                         }
@@ -260,7 +258,6 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                             {
                                 data.setWikiText("");
                                 data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
-                                data.setAudioButtonVisible(false);
                             }
 
                             list.add(data);

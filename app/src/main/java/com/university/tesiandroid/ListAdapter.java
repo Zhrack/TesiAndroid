@@ -1,6 +1,7 @@
 package com.university.tesiandroid;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.speech.tts.TextToSpeech;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -103,6 +105,7 @@ public class ListAdapter extends BaseAdapter {
             holder.txtName = (TextView) convertView.findViewById(R.id.textName);
             holder.txtDistance = (TextView) convertView.findViewById(R.id.textDistance);
             holder.audioBtn = (ImageButton)convertView.findViewById(R.id.audio_btn);
+            holder.progressBar = (ProgressBar)convertView.findViewById(R.id.wiki_progress);
 
             convertView.setTag(holder);
         } else {
@@ -112,7 +115,7 @@ public class ListAdapter extends BaseAdapter {
 
         holder.txtName.setText(list.get(position).getName());
         holder.txtDistance.setText(String.valueOf(list.get(position).getDistance()) + " m");
-        holder.audioBtn.setOnClickListener(null);
+
 
         final int pos = position;
         final ViewHolder hold = holder;
@@ -122,13 +125,15 @@ public class ListAdapter extends BaseAdapter {
             default:
             case PointInfo.WIKI_NOT_PRESENT:
                 Log.d(TAG, data.getName() + ": WIKI NOT PRESENT " + String.valueOf(pos));
-                hold.audioBtn.setVisibility(View.GONE);
+                hideAudioProgressBar(hold);
+                hold.audioBtn.setOnClickListener(null);
+
                 break;
             case PointInfo.WIKI_TO_PROCESS:
                 Log.d(TAG, data.getName() + ": WIKI TO PROCESS " + String.valueOf(pos));
 
             case PointInfo.WIKI_READY:
-                hold.audioBtn.setVisibility(View.VISIBLE);
+                showAudioButton(hold);
                 holder.audioBtn.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -139,6 +144,8 @@ public class ListAdapter extends BaseAdapter {
                             case PointInfo.WIKI_TO_PROCESS:
                                 // start thread to connect to wikipedia
                                 wikiParserThreadAvailable = false;
+
+                                showWikiProgressBar(hold);
 
                                 executor.execute(new Runnable() {
                                     @Override
@@ -167,8 +174,9 @@ public class ListAdapter extends BaseAdapter {
 
                                                     PointInfo tempData = list.get(pos);
                                                     tempData.setWikiLoaded(PointInfo.WIKI_READY);
-                                                    data.setAudioButtonVisible(true);
                                                     speak(tempData);
+
+                                                    showAudioButton(hold);
                                                     wikiParserThreadAvailable = true;
                                                 }
                                             });
@@ -178,11 +186,10 @@ public class ListAdapter extends BaseAdapter {
                                             UIHandler.post(new Runnable() {
                                                 @Override
                                                 public void run() {
-//                                                    adapter.updateWikiText(pos, "");
                                                     data.setWikiText("");
                                                     data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
-                                                    data.setAudioButtonVisible(false);
-                                                    hold.audioBtn.setVisibility(View.GONE);
+                                                    hideAudioProgressBar(hold);
+                                                    hold.audioBtn.setOnClickListener(null);
                                                     wikiParserThreadAvailable = true;
 
                                                     Toast.makeText(context, R.string.wiki_not_available, Toast.LENGTH_SHORT).show();
@@ -211,10 +218,10 @@ public class ListAdapter extends BaseAdapter {
     }
 
     static class ViewHolder {
-
         TextView txtName;
         TextView txtDistance;
         ImageButton audioBtn;
+        ProgressBar progressBar;
     }
 
     public boolean isWikiParserThreadAvailable() {
@@ -237,4 +244,23 @@ public class ListAdapter extends BaseAdapter {
 
         textToSpeech.speak(data.getWikiText(), TextToSpeech.QUEUE_FLUSH, null);
     }
+
+    public void showAudioButton(ViewHolder holder)
+    {
+        holder.audioBtn.setAlpha(1.0f);
+        holder.progressBar.setVisibility(View.GONE);
+    }
+
+    public void hideAudioProgressBar(ViewHolder holder)
+    {
+        holder.audioBtn.setAlpha(0.0f);
+        holder.progressBar.setVisibility(View.GONE);
+    }
+
+    public void showWikiProgressBar(ViewHolder holder)
+    {
+        holder.audioBtn.setAlpha(0.0f);
+        holder.progressBar.setVisibility(View.VISIBLE);
+    }
+
 }
