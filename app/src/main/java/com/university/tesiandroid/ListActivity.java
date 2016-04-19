@@ -53,9 +53,9 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private LocationRequest mLocationRequest;
 
     // Location updates intervals in sec
-    private static int UPDATE_INTERVAL = 10000; // 10 sec
-    private static int FASTEST_INTERVAL = 5000; // 5 sec
-    private static int DISPLACEMENT = 1; // 1 meters
+    private static int UPDATE_INTERVAL = 5000; // 10 sec
+    private static int FASTEST_INTERVAL = 2000; // 1 sec
+    private static int DISPLACEMENT = 0; // 1 meters
 
     // UI elements
 
