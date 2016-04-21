@@ -53,7 +53,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
     private LocationRequest mLocationRequest;
 
     // Location updates intervals in sec
-    private static int UPDATE_INTERVAL = 5000; // 10 sec
+    private static int UPDATE_INTERVAL = 10000; // 10 sec
     private static int FASTEST_INTERVAL = 2000; // 1 sec
     private static int DISPLACEMENT = 0; // 1 meters
 
@@ -220,7 +220,7 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                                             Log.d(TAG, "token: " + token);
                                             String[] wikiString = token.split("\"=>\"");
                                             // found an empty wiki link
-                                            if(wikiString.length < 1)
+                                            if(wikiString.length < 2)
                                                 break;
 
                                             String[] multipleWikiLinks = wikiString[1].split(";");
