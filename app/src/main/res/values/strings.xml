@@ -9,4 +9,5 @@
     <string name="txt_radius">Search radius:</string>
 
     <string name="wiki_not_available">Information not available from Wikipedia</string>
+    <string name="gps_not_active">Location sensor is inactive, please activate it.</string>
 </resources>
