@@ -166,28 +166,24 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
 
     @Override
     public void onLocationChanged(Location location) {
-        if(adapter.isWikiParserThreadAvailable())
-        {
-            // Assign the new location
-            LocationData locationData = LocationData.Instance();
-            locationData.setmLastLocation(location);
+        // Assign the new location
+        LocationData locationData = LocationData.Instance();
+        locationData.setmLastLocation(location);
 
-            Toast.makeText(getApplicationContext(), "Location changed!",
-                    Toast.LENGTH_SHORT).show();
+        Toast.makeText(getApplicationContext(), "Location changed!",
+                Toast.LENGTH_SHORT).show();
 
-            getLocation();
+        getLocation();
 
-            txtDevicePosition.setText("Position: " + String.valueOf(locationData.getLatitude()) + ", " +
-            String.valueOf(locationData.getLongitude()));
+        txtDevicePosition.setText("Position: " + String.valueOf(locationData.getLatitude()) + ", " +
+                String.valueOf(locationData.getLongitude()));
 
-            askPoints();
-        }
+        askPoints();
         Log.d(TAG, "location changed");
     }
 
     public void askPoints()
     {
-        adapter.setWikiParserThreadAvailable(false);
         StringRequest jsonObjReq = new StringRequest(Request.Method.POST,
                 AppController.urlServer,
                 new Response.Listener<String>() {
@@ -212,67 +208,21 @@ public class ListActivity extends Activity implements GoogleApiClient.Connection
                             data.setLongitude(jsonObject.get("longitude").getAsDouble());
                             data.setDistance(jsonObject.get("distance").getAsInt());
 
-                            JsonElement wikiText = jsonObject.get("wikiText");
-
-                            boolean wikiPresent = false;
-                            String lang = null;
-                            String wikiTag = null;
-                            if(wikiText != null)
+                            JsonElement wikiElement = jsonObject.get("wikiText");
+                            if(wikiElement != null)
                             {
-                                // extract wiki tag
-                                String tag = wikiText.getAsString();
-                                if(tag.contains("wikipedia"))
-                                {
-                                    String[] tokens = tag.split("\", \"");
-                                    for(String token : tokens)
-                                    {
-                                        if(token.contains("wikipedia"))
-                                        {
-                                            Log.d(TAG, "token: " + token);
-                                            String[] wikiString = token.split("\"=>\"");
-                                            // found an empty wiki link
-                                            if(wikiString.length < 2)
-                                                break;
-
-                                            String[] multipleWikiLinks = wikiString[1].split(";");
-                                            if(multipleWikiLinks.length != 1)
-                                            {
-                                                // multiple links found, get only first one
-                                                wikiString[1] = multipleWikiLinks[0];
-                                            }
-                                            String[] temp = wikiString[1].split(":");
-
-                                            lang = temp[0];
-                                            if(!lang.equals("it") && !lang.equals("en"))
-                                            {
-                                                // only italian and english accepted
-                                                break;
-                                            }
-                                            if(temp[1].endsWith("\""))
-                                                temp[1] = temp[1].substring(0, temp[1].length() - 1);
-                                            wikiTag = temp[1].replaceAll(" ", "_");
-                                            Log.d(TAG, lang);
-                                            Log.d(TAG, wikiTag);
-                                            data.setWikiText(wikiTag);
-                                            data.setLanguage(lang);
-                                            data.setWikiLoaded(PointInfo.WIKI_TO_PROCESS);
-                                            wikiPresent = true;
-                                            break;
-                                        }
-                                    } // inner loop
-
-                                }
+                                data.setWikiText(wikiElement.getAsString());
+                                data.setLanguage(jsonObject.get("language").getAsString());
                             }
-
-                            if(!wikiPresent)
+                            else // item doesn't have a wiki, set empty string
                             {
                                 data.setWikiText("");
-                                data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
+                                data.setLanguage("");
                             }
+
 
                             list.add(data);
                         }
-                        adapter.setWikiParserThreadAvailable(true);
                         adapter.updateList(list);
                     }
                 }, new Response.ErrorListener() {

@@ -47,31 +47,14 @@
 
     </LinearLayout>
 
-    <RelativeLayout
+    <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_vertical">
-
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/audio_btn"
-            android:src="@drawable/ic_action_name"
-            android:layout_margin="5dp"
-            android:layout_gravity="center_vertical"
-            android:visibility="visible"
-            style="@style/Widget.AppCompat.Button.Borderless" />
-
-        <ProgressBar
-            android:id="@+id/wiki_progress"
-            style="?android:attr/progressBarStyleSmall"
-            android:layout_width="40dip"
-            android:layout_height="40dip"
-            android:layout_margin="10dip"
-            android:visibility="gone"
-            android:layout_centerInParent="true">
-        </ProgressBar>
-
-    </RelativeLayout>
+        android:id="@+id/audio_btn"
+        android:src="@drawable/ic_action_name"
+        android:layout_margin="5dp"
+        android:layout_gravity="center_vertical"
+        android:visibility="visible"
+        style="@style/Widget.AppCompat.Button.Borderless" />
 
 </LinearLayout>

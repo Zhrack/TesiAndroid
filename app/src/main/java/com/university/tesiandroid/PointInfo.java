@@ -49,15 +49,6 @@ public class PointInfo {
         this.language = language;
     }
 
-
-    public int getWikiLoaded() {
-        return wikiLoaded;
-    }
-
-    public void setWikiLoaded(int wikiLoaded) {
-        this.wikiLoaded = wikiLoaded;
-    }
-
     public int getDistance() {
         return distance;
     }
@@ -71,6 +62,5 @@ public class PointInfo {
     private double longitude;
     private String wikiText;
     private String language;
-    private int wikiLoaded;
     private int distance;
 }

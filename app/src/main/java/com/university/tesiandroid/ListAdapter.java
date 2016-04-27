@@ -32,26 +32,15 @@ public class ListAdapter extends BaseAdapter {
     private static final String TAG = ListAdapter.class.getSimpleName();
 
     private ArrayList<PointInfo> list;
-    private String firstParagraphText;
     private boolean wikiParserThreadAvailable;
-    private ThreadPoolExecutor executor;
     private Context context;
     private TextToSpeech textToSpeech;
 
-    private Handler UIHandler;
-
     private LayoutInflater mInflater;
 
-    private ListAdapter adapter;
-
     public ListAdapter(ArrayList<PointInfo> list, Context context, Handler handler) {
-        this.adapter = this;
         this.list = list;
         this.context = context;
-        this.UIHandler = handler;
-
-        int NUMBER_OF_CORES = Runtime.getRuntime().availableProcessors();
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(NUMBER_OF_CORES);
 
         textToSpeech=new TextToSpeech(this.context, new TextToSpeech.OnInitListener() {
             @Override
@@ -88,12 +77,6 @@ public class ListAdapter extends BaseAdapter {
         this.notifyDataSetChanged();
     }
 
-    public void updateWikiText(int index, String text)
-    {
-        list.get(index).setWikiText(text);
-        this.notifyDataSetChanged();
-    }
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
@@ -104,7 +87,6 @@ public class ListAdapter extends BaseAdapter {
             holder.txtName = (TextView) convertView.findViewById(R.id.textName);
             holder.txtDistance = (TextView) convertView.findViewById(R.id.textDistance);
             holder.audioBtn = (ImageButton)convertView.findViewById(R.id.audio_btn);
-            holder.progressBar = (ProgressBar)convertView.findViewById(R.id.wiki_progress);
 
             convertView.setTag(holder);
         } else {
@@ -115,104 +97,23 @@ public class ListAdapter extends BaseAdapter {
         holder.txtName.setText(list.get(position).getName());
         holder.txtDistance.setText(String.valueOf(list.get(position).getDistance()) + " m");
 
+        final PointInfo data = list.get(position);
 
-        final int pos = position;
-        final ViewHolder hold = holder;
-        final PointInfo data = list.get(pos);
-        switch (data.getWikiLoaded())
+        if(data.getLanguage().equals("")) // item doesn't have wiki, deactivate button
         {
-            default:
-            case PointInfo.WIKI_NOT_PRESENT:
-                Log.d(TAG, data.getName() + ": WIKI NOT PRESENT " + String.valueOf(pos));
-                hideAudioProgressBar(hold);
-                hold.audioBtn.setOnClickListener(null);
-
-                break;
-            case PointInfo.WIKI_TO_PROCESS:
-                Log.d(TAG, data.getName() + ": WIKI TO PROCESS " + String.valueOf(pos));
-
-            case PointInfo.WIKI_READY:
-                showAudioButton(hold);
-                holder.audioBtn.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        // ListView Clicked item value
-
-                        switch (data.getWikiLoaded())
-                        {
-                            case PointInfo.WIKI_TO_PROCESS:
-                                // start thread to connect to wikipedia
-                                wikiParserThreadAvailable = false;
-
-                                showWikiProgressBar(hold);
-
-                                executor.execute(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        try {
-                                            Document doc = Jsoup.connect(AppController.http + data.getLanguage() + AppController.urlWiki + data.getWikiText()).get();
-
-                                            Elements paragraphs = doc.select("#mw-content-text div > p");
-
-                                            Element firstParagraph = paragraphs.first();
-                                            firstParagraphText = firstParagraph.text();
-                                            // sometimes the coordinates are taken as first paragraph, check for that
-                                            if(firstParagraphText.startsWith("Coord"))
-                                            {
-                                                firstParagraph = paragraphs.get(1);
-                                                firstParagraphText = firstParagraph.text();
-                                            }
-
-                                            Log.d(TAG, firstParagraphText);
-
-
-                                            UIHandler.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    adapter.updateWikiText(pos, firstParagraphText);
-
-                                                    PointInfo tempData = list.get(pos);
-                                                    tempData.setWikiLoaded(PointInfo.WIKI_READY);
-                                                    speak(tempData);
-
-                                                    showAudioButton(hold);
-                                                    wikiParserThreadAvailable = true;
-                                                }
-                                            });
-
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                            UIHandler.post(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    data.setWikiText("");
-                                                    data.setWikiLoaded(PointInfo.WIKI_NOT_PRESENT);
-                                                    hideAudioProgressBar(hold);
-                                                    hold.audioBtn.setOnClickListener(null);
-                                                    wikiParserThreadAvailable = true;
-
-                                                    Toast.makeText(context, R.string.wiki_not_available, Toast.LENGTH_SHORT).show();
-                                                }
-                                            });
-                                        }
-                                    }
-                                });
-                                break;
-                            case PointInfo.WIKI_READY:
-                                Log.d(TAG, "WIKI READY");
-                                speak(data);
-                                break;
-                            default:
-                                Log.d(TAG, "wiki loaded status doesn't exist: " + String.valueOf(data.getWikiLoaded()));
-                                break;
-                        }
-                    }
-                });
-                break;
+            hideAudioButton(holder);
         }
-
-
-
+        else
+        {
+            showAudioButton(holder);
+            holder.audioBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // ListView Clicked item value
+                    speak(data);
+                }
+            });
+        }
         return convertView;
     }
 
@@ -220,7 +121,6 @@ public class ListAdapter extends BaseAdapter {
         TextView txtName;
         TextView txtDistance;
         ImageButton audioBtn;
-        ProgressBar progressBar;
     }
 
     public boolean isWikiParserThreadAvailable() {
@@ -247,19 +147,12 @@ public class ListAdapter extends BaseAdapter {
     public void showAudioButton(ViewHolder holder)
     {
         holder.audioBtn.setAlpha(1.0f);
-        holder.progressBar.setVisibility(View.GONE);
     }
 
-    public void hideAudioProgressBar(ViewHolder holder)
+    public void hideAudioButton(ViewHolder holder)
     {
         holder.audioBtn.setAlpha(0.0f);
-        holder.progressBar.setVisibility(View.GONE);
-    }
-
-    public void showWikiProgressBar(ViewHolder holder)
-    {
-        holder.audioBtn.setAlpha(0.0f);
-        holder.progressBar.setVisibility(View.VISIBLE);
+        holder.audioBtn.setOnClickListener(null);
     }
 
 }
